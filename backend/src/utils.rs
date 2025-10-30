@@ -136,7 +136,10 @@ where
         .zip(b.par_iter())
         .map(|(&x, &y)| x * y)
         .sum::<EFPacking<EF>>();
-    unpack_extension(&[res_packed]).into_iter().sum()
+    let packed_coeffs = res_packed.as_basis_coefficients_slice();
+    (0..packing_width::<EF>())
+        .map(|i| EF::from_basis_coefficients_fn(|j| packed_coeffs[j].as_slice()[i]))
+        .sum()
 }
 
 pub fn split_at_many<'a, A>(slice: &'a [A], indices: &[usize]) -> Vec<&'a [A]> {
