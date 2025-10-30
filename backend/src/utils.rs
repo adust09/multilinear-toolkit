@@ -131,7 +131,9 @@ where
     EFPacking<EF>: Algebra<R>,
 {
     assert_eq!(a.len(), b.len());
+    // TODO: Add a sequential path to skip Rayon on tiny slices.
     let res_packed: EFPacking<EF> = a
+        // TODO: Tune Rayon splitting (e.g. with_min_len) to match packing width.
         .par_iter()
         .zip(b.par_iter())
         .map(|(&x, &y)| x * y)
