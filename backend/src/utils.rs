@@ -131,13 +131,19 @@ where
     EFPacking<EF>: Algebra<R>,
 {
     assert_eq!(a.len(), b.len());
-    // TODO: Add a sequential path to skip Rayon on tiny slices.
-    let res_packed: EFPacking<EF> = a
+    const PARALLEL_THRESHOLD: usize = 256;
+    let res_packed: EFPacking<EF> = if a.len() < PARALLEL_THRESHOLD {
+        a.iter()
+            .zip(b.iter())
+            .map(|(&x, &y)| x * y)
+            .sum::<EFPacking<EF>>()
+    } else {
         // TODO: Tune Rayon splitting (e.g. with_min_len) to match packing width.
-        .par_iter()
-        .zip(b.par_iter())
-        .map(|(&x, &y)| x * y)
-        .sum::<EFPacking<EF>>();
+        a.par_iter()
+            .zip(b.par_iter())
+            .map(|(&x, &y)| x * y)
+            .sum::<EFPacking<EF>>()
+    };
     let packed_coeffs = res_packed.as_basis_coefficients_slice();
     (0..packing_width::<EF>())
         .map(|i| EF::from_basis_coefficients_fn(|j| packed_coeffs[j].as_slice()[i]))
